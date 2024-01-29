@@ -1,0 +1,31 @@
+$sidebar-width: 20%;
+$sidebar-padding-sides: 20px;
+
+.sidebar {
+  height: 100%;
+  position: absolute;
+  background-color: var(--mat-expansion-container-background-color);
+  top: 0;
+  width: $sidebar-width;
+  padding: var(--mat-toolbar-standard-height) $sidebar-padding-sides;
+
+  &--open {
+    transition: left 0.5s;
+    left: 0;
+  }
+
+  &--closed {
+    transition: left 0.5s;
+    left: calc(0px - $sidebar-width - (2 * $sidebar-padding-sides));
+  }
+}
+
+.backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--mat-sidebar-background);
+  opacity: 0.7;
+}

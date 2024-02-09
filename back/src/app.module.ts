@@ -6,7 +6,7 @@ import { CompanyModule } from './company/company.module';
 import { Company } from './company/entities/company.entity';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { FeatureFlag } from './feature-flags/entities/feature-flag.entity';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeorm from './config/typeorm';
 
 @Module({
@@ -15,16 +15,10 @@ import typeorm from './config/typeorm';
       isGlobal: true,
       load: [typeorm],
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      password: 'admin',
-      username: 'postgres',
-      entities: [Company, FeatureFlag],
-      database: 'feature-flags',
-      synchronize: true,
-      logging: true,
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        configService.get('typeorm'),
     }),
     CompanyModule,
     FeatureFlagsModule,

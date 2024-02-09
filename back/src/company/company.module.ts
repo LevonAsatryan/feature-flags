@@ -1,16 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Company, CompanySchema } from './schemas/company.schema';
-import { CompanyService } from './services/company.service';
-import { CompanyController } from './controllers/company.controller';
-import { FeaturesController } from './controllers/features.controller';
-import { FeaturesService } from './services/features.service';
+import { CompanyService } from './company.service';
+import { CompanyController } from './company.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Company } from './entities/company.entity';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Company.name, schema: CompanySchema }]),
-  ],
-  controllers: [CompanyController, FeaturesController],
-  providers: [CompanyService, FeaturesService],
+  imports: [TypeOrmModule.forFeature([Company])],
+  controllers: [CompanyController],
+  providers: [CompanyService],
 })
 export class CompanyModule {}

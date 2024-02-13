@@ -4,8 +4,6 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 
 dotenvConfig({ path: './src/.env' });
 
-console.info(process.env);
-
 const config = {
   type: 'postgres',
   host: `${process.env.DATABASE_HOST}`,
@@ -16,7 +14,7 @@ const config = {
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/migrations/*{.ts,.js}'],
   autoLoadEntities: true,
-  synchronize: false,
+  synchronize: true,
 };
 
 export default registerAs('typeorm', () => config);

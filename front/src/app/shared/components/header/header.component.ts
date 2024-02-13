@@ -33,7 +33,6 @@ export class HeaderComponent {
   @HostListener('window:scroll', ['$event'])
   public onWindowScroll(event: Event): void {
     if (!this.header) return;
-    console.info(this.header);
     const currentScrollPos = window.scrollY;
     if (this.prevScrollpos > currentScrollPos) {
       this.header.nativeElement.style.top = '0';

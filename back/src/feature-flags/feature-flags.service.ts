@@ -17,22 +17,48 @@ export class FeatureFlagsService {
     featureFlag.name = createFeatureFlagDto.name;
     featureFlag.companyId = createFeatureFlagDto.companyId;
     featureFlag.isEnabled = true;
+    featureFlag.containerId = createFeatureFlagDto.containerId;
+    return this.featureFlagRepository.save(featureFlag);
+  }
+
+  async findFeatureFlagsByContainerId(containerId: number) {
+    const ff = await this.featureFlagRepository.query(
+      `SELECT * FROM feature_flag WHERE container_id = ${containerId}`
+    );
+
+    return ff;
+  }
+
+  createTestFeatureForRoot(companyId: number, containerId: number) {
+    const featureFlag = new FeatureFlag();
+    featureFlag.name = 'test';
+    featureFlag.companyId = companyId;
+    featureFlag.isEnabled = true;
+    featureFlag.containerId = containerId;
     return this.featureFlagRepository.save(featureFlag);
   }
 
   findAll() {
-    return `This action returns all featureFlags`;
+    return this.featureFlagRepository.find();
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} featureFlag`;
+    return this.featureFlagRepository.findOne({ where: { id } });
   }
 
-  update(id: number, updateFeatureFlagDto: UpdateFeatureFlagDto) {
-    return `This action updates a #${id} featureFlag`;
+  async update(id: number, updateFeatureFlagDto: UpdateFeatureFlagDto) {
+    const ff = await this.featureFlagRepository.findOne({ where: { id } });
+
+    ff.containerId = updateFeatureFlagDto.containerId || ff.containerId;
+    ff.name = updateFeatureFlagDto.name || ff.name;
+    ff.isEnabled = updateFeatureFlagDto.isEnabled || ff.isEnabled;
+
+    return this.featureFlagRepository.save(ff);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} featureFlag`;
+  async remove(id: number) {
+    const ff = await this.featureFlagRepository.findOne({ where: { id } });
+    this.featureFlagRepository.delete({ id });
+    return ff;
   }
 }

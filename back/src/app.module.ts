@@ -6,6 +6,8 @@ import { CompanyModule } from './company/company.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ContainersModule } from './containers/containers.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import typeorm from './config/typeorm';
 
 @Module({
@@ -19,9 +21,11 @@ import typeorm from './config/typeorm';
       useFactory: (configService: ConfigService) =>
         configService.get('typeorm'),
     }),
+    AuthModule,
     CompanyModule,
     FeatureFlagsModule,
     ContainersModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

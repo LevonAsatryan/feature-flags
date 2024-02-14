@@ -6,13 +6,16 @@ import { Company } from './entities/company.entity';
 import { ContainersService } from 'src/containers/containers.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FeatureFlagsService } from 'src/feature-flags/feature-flags.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class CompanyService {
   constructor(
-    @InjectRepository(Company) private companyRepository: Repository<Company>,
-    private containerService: ContainersService,
-    private featureService: FeatureFlagsService
+    @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>,
+    private readonly containerService: ContainersService,
+    private readonly featureService: FeatureFlagsService,
+    private readonly usersService: UsersService
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto) {
@@ -25,6 +28,10 @@ export class CompanyService {
     await this.featureService.createTestFeatureForRoot(
       companyObj.id,
       rootContainer.id
+    );
+    await this.usersService.createDefaultAdminUser(
+      createCompanyDto.email,
+      companyObj
     );
     return companyObj;
   }

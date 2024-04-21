@@ -1,4 +1,0 @@
-export const randomPasswordGenerator = () => {
-  const randomString = Math.random().toString(36).slice(-8);
-  return randomString;
-};

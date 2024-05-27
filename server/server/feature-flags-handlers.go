@@ -2,11 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/LevonAsatryan/feature-flags/db"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,97 +18,119 @@ type CreateFFBody struct {
 	Env  string `json:"env"`
 }
 
+type UpdateFFBody struct {
+	Name  string `json:"name"`
+	Value bool   `json:"value"`
+}
+
 func (s *Server) CreateFFSGroup() *gin.RouterGroup {
 	group := s.R.Group("/ffs")
-	createMockedFeatureFlags()
 	createMessages()
-	createEnvs()
-	group.GET("/", getAll)
-	group.GET("/:id", getOne)
-	group.POST("/", create)
-	group.DELETE("/:id", delete)
+	group.GET("/", s.getFFAll)
+	group.GET("/:id", s.getFFById)
+	group.POST("/", s.createFF)
+	group.DELETE("/:id", s.deleteFF)
+	group.PUT("/:id", s.updateFF)
 	return group
 }
 
-func getAll(c *gin.Context) {
-	c.JSON(http.StatusOK, &mockedFeatureFlags)
+func (s *Server) getFFAll(c *gin.Context) {
+	ffs, err := s.DB.GetFFAll()
+
+	if err != nil {
+		errorHandler(c, http.StatusInternalServerError, messages["intError"])
+		return
+	}
+
+	c.JSON(http.StatusOK, ffs)
 }
 
-func create(c *gin.Context) {
+func (s *Server) createFF(c *gin.Context) {
 	var rb CreateFFBody
 	decoder := json.NewDecoder(c.Request.Body)
 	err := decoder.Decode(&rb)
+
 	if err != nil {
 		errorHandler(c, http.StatusBadRequest, err.Error())
 	}
 
-	env, err := checkEnv(rb.Env)
+	ff, err := s.DB.CreateFF(rb.Name, rb.Env)
+
 	if err != nil {
-		errorHandler(c, http.StatusNotFound, err.Error())
+		errorHandler(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ff := db.FeatureFlag{
-		ID:    len(mockedFeatureFlags),
-		Name:  rb.Name,
-		Env:   env.ID,
-		Value: false,
-	}
-	mockedFeatureFlags = append(mockedFeatureFlags, ff)
 	c.JSON(http.StatusOK, &ff)
 }
 
-func getOne(c *gin.Context) {
+func (s *Server) updateFF(c *gin.Context) {
+	var rb UpdateFFBody
+	decoder := json.NewDecoder(c.Request.Body)
+	err := decoder.Decode(&rb)
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		errorHandler(c, http.StatusBadRequest, messages["invalidId"])
 		return
 	}
-	res, _ := findFF(id)
 
-	if res == nil {
+	if err != nil {
+		errorHandler(c, http.StatusBadRequest, messages["badRequest"])
+		return
+	}
+
+	ff, err := s.DB.UpdateFF(id, rb.Name, rb.Value)
+
+	if err != nil {
+		errorHandler(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, ff)
+}
+
+func (s *Server) getFFById(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		errorHandler(c, http.StatusBadRequest, messages["invalidId"])
+		return
+	}
+	ff, err := s.DB.GetFFById(id)
+
+	if err != nil {
 		errorHandler(c, http.StatusNotFound, messages["ffNotFound"])
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, ff)
 }
 
-func delete(c *gin.Context) {
+func (s *Server) deleteFF(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		errorHandler(c, http.StatusBadRequest, messages["invalidId"])
-	}
-
-	res, index := findFF(id)
-
-	if res == nil {
-		errorHandler(c, http.StatusNotFound, messages["ffNotFound"])
 		return
 	}
 
-	mockedFeatureFlags = append(mockedFeatureFlags[:index], mockedFeatureFlags[index+1:]...)
+	_, err = s.DB.GetFFById(id)
 
-	c.JSON(http.StatusOK, res)
-}
-
-func remove(slice []int, s int) []int {
-	return append(slice[:s], slice[s+1:]...)
-}
-
-func findFF(id int) (*db.FeatureFlag, int) {
-	var res *db.FeatureFlag
-	var index int
-	for i, ff := range mockedFeatureFlags {
-		if ff.ID == id {
-			res = &ff
-			index = i
-			break
-		}
+	if err != nil {
+		errorHandler(c, http.StatusBadRequest, messages["ffNotFound"])
+		return
 	}
 
-	return res, index
+	err = s.DB.DeleteFF(id)
+
+	if err != nil {
+		errorHandler(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
 }
 
 func errorHandler(c *gin.Context, status int, message string) {
@@ -124,56 +143,7 @@ var messages map[string]string = make(map[string]string)
 
 func createMessages() {
 	messages["ffNotFound"] = "Feature flag with given ID was not found"
+	messages["badRequest"] = "Bad request"
 	messages["invalidId"] = "Provided ID is not valid"
+	messages["intError"] = "Something went wrong"
 }
-
-/**
- * Test data start
- */
-var mockedFeatureFlags []db.FeatureFlag
-var envs []Env
-
-func createMockedFeatureFlags() {
-	for i := 0; i < 100; i++ {
-		mockedFeatureFlags = append(
-			mockedFeatureFlags,
-			db.FeatureFlag{
-				ID:    i,
-				Name:  "test" + strconv.Itoa(i),
-				Value: i%2 == 0,
-				Env:   0, Created_at: "0",
-				Updated_at: "0",
-			})
-	}
-}
-
-func createEnvs() {
-	envs = append(envs, Env{
-		ID:   0,
-		Name: "dev",
-	})
-	envs = append(envs, Env{
-		ID:   1,
-		Name: "prod",
-	})
-}
-
-func checkEnv(name string) (*Env, error) {
-	var ret *Env
-	for _, env := range envs {
-		if env.Name == name {
-			ret = &env
-			break
-		}
-	}
-
-	if ret == nil {
-		return nil, fmt.Errorf("env with name %q not found", name)
-	}
-
-	return ret, nil
-}
-
-/**
- * Test data end
- */

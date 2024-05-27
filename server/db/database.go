@@ -13,8 +13,10 @@ type DB struct {
 }
 
 type Env struct {
-	ID   int    `db:"id"`
-	Name string `db:"name"`
+	ID         int    `db:"id"`
+	Name       string `db:"name"`
+	Created_at string `db:"created_at"`
+	Updated_at string `db:"updated_at"`
 }
 
 var db DB
@@ -23,8 +25,6 @@ func ConnectDB(username, password, port, name string) (*DB, error) {
 	db = DB{
 		ConnStr: fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=disable", username, password, port, name),
 	}
-
-	fmt.Println(db.ConnStr)
 
 	conn, err := sql.Open("postgres", db.ConnStr)
 	if err != nil {
@@ -83,7 +83,7 @@ func (db *DB) createEnvTable() error {
 
 func (db *DB) createFFTable() error {
 	_, err := db.Conn.Query(
-		"CREATE TABLE if NOT EXISTS feature_flags (id SERIAL PRIMARY KEY, name VARCHAR(255), value BOOLEAN, env_id integer REFERENCES env (id), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
+		"CREATE TABLE if NOT EXISTS feature_flags (id SERIAL PRIMARY KEY, name VARCHAR(255) UNIQUE, value BOOLEAN DEFAULT true, env_id integer REFERENCES env (id), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
 	)
 
 	return err

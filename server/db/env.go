@@ -1,19 +1,21 @@
 package db
 
-import "fmt"
-
 func (db *DB) GetEnvByName(name string) (*Env, error) {
 	var env Env
 
-	res, err := db.Conn.Query(
-		fmt.Sprintf("SELECT * FROM env WHERE name=%s", name),
+	res := db.Conn.QueryRow(
+		"SELECT * FROM env WHERE name = $1", name,
 	)
+
+	err := res.Scan(&env.ID, &env.Name, &env.Created_at, &env.Updated_at)
 
 	if err != nil {
 		return nil, err
 	}
 
-	res.Scan(&env)
+	// if env.Name == "" {
+	// 	return nil, fmt.Errorf("the environment with name %s not found", name)
+	// }
 
 	return &env, nil
 }

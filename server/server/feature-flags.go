@@ -146,4 +146,5 @@ func createMessages() {
 	messages["badRequest"] = "Bad request"
 	messages["invalidId"] = "Provided ID is not valid"
 	messages["intError"] = "Something went wrong"
+	messages["envNotFound"] = "Environment with given ID was not found"
 }

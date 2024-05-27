@@ -13,10 +13,10 @@ type DB struct {
 }
 
 type Env struct {
-	ID         int    `db:"id"`
-	Name       string `db:"name"`
-	Created_at string `db:"created_at"`
-	Updated_at string `db:"updated_at"`
+	ID         int    `db:"id" json:"id"`
+	Name       string `db:"name" json:"name"`
+	Created_at string `db:"created_at" json:"createdAt"`
+	Updated_at string `db:"updated_at" json:"updatedAt"`
 }
 
 var db DB

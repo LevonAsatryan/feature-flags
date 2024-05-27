@@ -31,6 +31,7 @@ func CreateServer() Server {
 		R:  r,
 	}
 	server.CreateFFSGroup()
+	server.CreateEnvGroup()
 	r.Run(port)
 
 	return server

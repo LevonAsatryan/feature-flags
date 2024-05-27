@@ -62,16 +62,16 @@ func (db *DB) createEnvTable() error {
 		return err
 	}
 	var rowCount int
-	res, err := db.Conn.Query(
+
+	res := db.Conn.QueryRow(
 		"SELECT COUNT(*) FROM env",
 	)
+
 	if err != nil {
 		return err
 	}
 
 	res.Scan(&rowCount)
-
-	fmt.Println(rowCount)
 
 	if rowCount == 0 {
 		_, err = db.Conn.Query(

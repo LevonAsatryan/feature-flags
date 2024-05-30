@@ -1,17 +1,10 @@
 package server
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
-
-type CreateEnvBody struct {
-	Name string `json:"name"`
-}
 
 func (s *Server) CreateEnvGroup() *gin.RouterGroup {
 	group := s.R.Group("/envs")
@@ -24,10 +17,10 @@ func (s *Server) CreateEnvGroup() *gin.RouterGroup {
 }
 
 func (s *Server) getEnvAll(c *gin.Context) {
-	envs, err := s.DB.GetEnvAll()
+	envs, err := s.EnvController.GetAll(c)
 
 	if err != nil {
-		errorHandler(c, http.StatusInternalServerError, messages["intError"])
+		ErrorHandler(c, err.Code, err.Err.Error())
 		return
 	}
 
@@ -35,16 +28,10 @@ func (s *Server) getEnvAll(c *gin.Context) {
 }
 
 func (s *Server) getEnvById(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		errorHandler(c, http.StatusBadRequest, messages["invalidId"])
-		return
-	}
-
-	env, err := s.DB.GetEnvById(id)
+	env, err := s.EnvController.GetById(c)
 
 	if err != nil {
-		errorHandler(c, http.StatusBadRequest, messages["envNotFound"])
+		ErrorHandler(c, err.Code, err.Err.Error())
 		return
 	}
 
@@ -52,22 +39,10 @@ func (s *Server) getEnvById(c *gin.Context) {
 }
 
 func (s *Server) createEnv(c *gin.Context) {
-	var rb CreateEnvBody
-
-	decoder := json.NewDecoder(c.Request.Body)
-	err := decoder.Decode(&rb)
+	env, err := s.EnvController.Create(c)
 
 	if err != nil {
-		errorHandler(c, http.StatusBadRequest, messages["badRequest"])
-		return
-	}
-
-	fmt.Println(rb.Name)
-
-	env, err := s.DB.CreateEnv(rb.Name)
-
-	if err != nil {
-		errorHandler(c, http.StatusBadRequest, err.Error())
+		ErrorHandler(c, err.Code, err.Err.Error())
 		return
 	}
 
@@ -75,9 +50,25 @@ func (s *Server) createEnv(c *gin.Context) {
 }
 
 func (s *Server) deleteEnv(c *gin.Context) {
-	panic("NOT IMPLEMENTED")
+	err := s.EnvController.Delete(c)
+
+	if err != nil {
+		ErrorHandler(c, err.Code, err.Err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
 }
 
 func (s *Server) updateEnv(c *gin.Context) {
-	panic("NOT IMPLEMENTED")
+	env, err := s.EnvController.Update(c)
+
+	if err != nil {
+		ErrorHandler(c, err.Code, err.Err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, env)
 }

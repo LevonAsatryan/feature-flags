@@ -12,13 +12,6 @@ type DB struct {
 	Conn    *sql.DB
 }
 
-type Env struct {
-	ID         int    `db:"id" json:"id"`
-	Name       string `db:"name" json:"name"`
-	Created_at string `db:"created_at" json:"createdAt"`
-	Updated_at string `db:"updated_at" json:"updatedAt"`
-}
-
 var db DB
 
 func ConnectDB(username, password, port, name string) (*DB, error) {
@@ -55,7 +48,9 @@ func (db *DB) createTables() error {
 
 func (db *DB) createEnvTable() error {
 	_, err := db.Conn.Query(
-		"CREATE TABLE if NOT EXISTS env (id SERIAL PRIMARY KEY, name VARCHAR(255) UNIQUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
+		`CREATE TABLE if NOT EXISTS env
+		(id SERIAL PRIMARY KEY, name VARCHAR(255) UNIQUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`,
 	)
 
 	if err != nil {
@@ -83,7 +78,10 @@ func (db *DB) createEnvTable() error {
 
 func (db *DB) createFFTable() error {
 	_, err := db.Conn.Query(
-		"CREATE TABLE if NOT EXISTS feature_flags (id SERIAL PRIMARY KEY, name VARCHAR(255) UNIQUE, value BOOLEAN DEFAULT true, env_id integer REFERENCES env (id), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())",
+		`CREATE TABLE if NOT EXISTS feature_flags
+		(id SERIAL PRIMARY KEY, name VARCHAR(255),
+		value BOOLEAN DEFAULT true, env_id integer REFERENCES env (id),
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`,
 	)
 
 	return err

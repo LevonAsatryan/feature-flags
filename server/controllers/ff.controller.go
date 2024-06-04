@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"github.com/LevonAsatryan/feature-flags/db"
 	"github.com/LevonAsatryan/feature-flags/types"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CreateFFBody struct {
@@ -19,7 +21,8 @@ type UpdateFFBody struct {
 }
 
 type FFController struct {
-	DB *db.DB
+	DB  *db.Queries
+	Ctx context.Context
 }
 
 func (c *FFController) CreateFF(context *gin.Context) ([]db.FeatureFlag, *types.Error) {
@@ -34,33 +37,64 @@ func (c *FFController) CreateFF(context *gin.Context) ([]db.FeatureFlag, *types.
 		}
 	}
 
-	ffIDs, err := c.DB.CreateFF(rb.Name)
+	envs, err := c.DB.GetEnvAll(context)
 
 	if err != nil {
-		return nil, err
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to get envs"),
+		}
 	}
 
-	for _, ffID := range ffIDs {
-		ff, err := c.DB.GetFFById(ffID)
+	for _, env := range envs {
+		ff, err := c.DB.CreateFF(c.Ctx, db.CreateFFParams{
+			Name: pgtype.Text{
+				String: rb.Name,
+				Valid:  rb.Name != "",
+			},
+			EnvID: pgtype.Int4{
+				Int32: int32(env.ID),
+				Valid: true,
+			},
+		})
 
 		if err != nil {
 			return nil, &types.Error{
 				Code: http.StatusInternalServerError,
-				Err:  fmt.Errorf("failed to fetch the created feature flag"),
+				Err:  fmt.Errorf("failed to create ff"),
 			}
 		}
 
-		ffs = append(ffs, *ff)
+		ffs = append(ffs, ff)
 	}
 
 	return ffs, nil
 }
 
 func (c *FFController) GetAll(context *gin.Context) ([]db.FeatureFlag, *types.Error) {
-	ffs, err := c.DB.GetFFAll()
+	ffs, err := c.DB.GetFeatureFlagAll(c.Ctx)
 
 	if err != nil {
-		return nil, err
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to get ff"),
+		}
+	}
+
+	return ffs, nil
+}
+
+func (c *FFController) GetByEnvId(context *gin.Context, envID int32) ([]db.FeatureFlag, *types.Error) {
+	ffs, err := c.DB.GetFeatureFlagByEnvId(c.Ctx, pgtype.Int4{
+		Int32: envID,
+		Valid: true,
+	})
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to get ff"),
+		}
 	}
 
 	return ffs, nil
@@ -76,20 +110,23 @@ func (c *FFController) GetById(context *gin.Context) (*db.FeatureFlag, *types.Er
 		}
 	}
 
-	ff, tErr := c.DB.GetFFById(id)
+	ff, err := c.DB.GetFeatureFlag(c.Ctx, int32(id))
 
-	if tErr != nil {
-		return nil, tErr
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to get ff by id %d", id),
+		}
 	}
 
-	return ff, nil
+	return &ff, nil
 }
 
-func (c *FFController) Update(context *gin.Context) (*db.FeatureFlag, *types.Error) {
+func (c *FFController) Update(context *gin.Context) *types.Error {
 	var rb UpdateFFBody
 
 	if err := context.ShouldBindJSON(&rb); err != nil {
-		return nil, &types.Error{
+		return &types.Error{
 			Code: http.StatusBadRequest,
 			Err:  fmt.Errorf("invalid body"),
 		}
@@ -98,19 +135,25 @@ func (c *FFController) Update(context *gin.Context) (*db.FeatureFlag, *types.Err
 	id, err := strconv.Atoi(context.Param("id"))
 
 	if err != nil {
-		return nil, &types.Error{
+		return &types.Error{
 			Code: http.StatusBadRequest,
 			Err:  fmt.Errorf("invalid id provided"),
 		}
 	}
 
-	ff, tErr := c.DB.UpdateFF(id, rb.Value)
+	err = c.DB.UpdateFF(c.Ctx, db.UpdateFFParams{
+		ID:    int32(id),
+		Value: pgtype.Bool{Bool: rb.Value, Valid: true},
+	})
 
-	if tErr != nil {
-		return nil, tErr
+	if err != nil {
+		return &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to update ff"),
+		}
 	}
 
-	return ff, nil
+	return nil
 }
 
 func (c *FFController) Delete(context *gin.Context) *types.Error {
@@ -122,13 +165,15 @@ func (c *FFController) Delete(context *gin.Context) *types.Error {
 			Err:  fmt.Errorf("invalid id provided"),
 		}
 	}
-	_, tErr := c.DB.GetFFById(id)
 
-	if tErr != nil {
-		return tErr
+	err = c.DB.DeleteFF(context, int32(id))
+
+	if err != nil {
+		return &types.Error{
+			Code: http.StatusNotFound,
+			Err:  fmt.Errorf("feature flag not found"),
+		}
 	}
 
-	tErr = c.DB.DeleteFF(id)
-
-	return tErr
+	return nil
 }

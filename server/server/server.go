@@ -74,6 +74,12 @@ func (s *Server) CreateTables(conn db.DBTX) error {
 	if err != nil {
 		return err
 	}
+
+	err = s.createGroupsTable(conn)
+	if err != nil {
+		return err
+	}
+
 	err = s.createFFTable(conn)
 	if err != nil {
 		return err
@@ -102,9 +108,24 @@ func (s *Server) createFFTable(conn db.DBTX) error {
 			name VARCHAR(255),
 			value BOOLEAN DEFAULT true,
 			env_id integer REFERENCES env (id),
+			group_id integer REFERENCES groups (id),
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		)
+		);
+	`)
+
+	return err
+}
+
+func (s *Server) createGroupsTable(conn db.DBTX) error {
+	_, err := conn.Exec(s.FFController.Ctx, `
+		CREATE TABLE if NOT EXISTS groups (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255),
+			env_id integer REFERENCES env(id),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    		updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		);
 	`)
 
 	return err

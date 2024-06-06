@@ -34,7 +34,7 @@ func (q *Queries) CreateEnv(ctx context.Context, arg CreateEnvParams) (Env, erro
 }
 
 const createFF = `-- name: CreateFF :one
-INSERT INTO feature_flags (name, env_id) VALUES ($1, $2) RETURNING id, name, value, env_id, created_at, updated_at
+INSERT INTO feature_flags (name, env_id) VALUES ($1, $2) RETURNING id, name, value, env_id, group_id, created_at, updated_at
 `
 
 type CreateFFParams struct {
@@ -50,6 +50,7 @@ func (q *Queries) CreateFF(ctx context.Context, arg CreateFFParams) (FeatureFlag
 		&i.Name,
 		&i.Value,
 		&i.EnvID,
+		&i.GroupID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -142,7 +143,7 @@ func (q *Queries) GetEnvCount(ctx context.Context) (int64, error) {
 }
 
 const getFF = `-- name: GetFF :one
-SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE id = $1 LIMIT 1
+SELECT id, name, value, env_id, group_id, created_at, updated_at FROM feature_flags WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetFF(ctx context.Context, id int32) (FeatureFlag, error) {
@@ -153,6 +154,7 @@ func (q *Queries) GetFF(ctx context.Context, id int32) (FeatureFlag, error) {
 		&i.Name,
 		&i.Value,
 		&i.EnvID,
+		&i.GroupID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -160,7 +162,7 @@ func (q *Queries) GetFF(ctx context.Context, id int32) (FeatureFlag, error) {
 }
 
 const getFFAll = `-- name: GetFFAll :many
-SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags
+SELECT id, name, value, env_id, group_id, created_at, updated_at FROM feature_flags
 `
 
 func (q *Queries) GetFFAll(ctx context.Context) ([]FeatureFlag, error) {
@@ -177,6 +179,7 @@ func (q *Queries) GetFFAll(ctx context.Context) ([]FeatureFlag, error) {
 			&i.Name,
 			&i.Value,
 			&i.EnvID,
+			&i.GroupID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -191,7 +194,7 @@ func (q *Queries) GetFFAll(ctx context.Context) ([]FeatureFlag, error) {
 }
 
 const getFFByEnvId = `-- name: GetFFByEnvId :many
-SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE env_id = $1
+SELECT id, name, value, env_id, group_id, created_at, updated_at FROM feature_flags WHERE env_id = $1
 `
 
 func (q *Queries) GetFFByEnvId(ctx context.Context, envID pgtype.Int4) ([]FeatureFlag, error) {
@@ -208,6 +211,7 @@ func (q *Queries) GetFFByEnvId(ctx context.Context, envID pgtype.Int4) ([]Featur
 			&i.Name,
 			&i.Value,
 			&i.EnvID,
+			&i.GroupID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -222,7 +226,7 @@ func (q *Queries) GetFFByEnvId(ctx context.Context, envID pgtype.Int4) ([]Featur
 }
 
 const getFFByName = `-- name: GetFFByName :many
-SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE name = $1
+SELECT id, name, value, env_id, group_id, created_at, updated_at FROM feature_flags WHERE name = $1
 `
 
 func (q *Queries) GetFFByName(ctx context.Context, name pgtype.Text) ([]FeatureFlag, error) {
@@ -239,6 +243,7 @@ func (q *Queries) GetFFByName(ctx context.Context, name pgtype.Text) ([]FeatureF
 			&i.Name,
 			&i.Value,
 			&i.EnvID,
+			&i.GroupID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -268,7 +273,7 @@ func (q *Queries) UpdateEnv(ctx context.Context, arg UpdateEnvParams) error {
 }
 
 const updateFF = `-- name: UpdateFF :exec
-UPDATE feature_flags set value = $2 WHERE id = $1 RETURNING id, name, value, env_id, created_at, updated_at
+UPDATE feature_flags set value = $2 WHERE id = $1 RETURNING id, name, value, env_id, group_id, created_at, updated_at
 `
 
 type UpdateFFParams struct {
@@ -282,7 +287,7 @@ func (q *Queries) UpdateFF(ctx context.Context, arg UpdateFFParams) error {
 }
 
 const updateFFName = `-- name: UpdateFFName :exec
-UPDATE feature_flags set name = $2 WHERE name = $1 RETURNING id, name, value, env_id, created_at, updated_at
+UPDATE feature_flags set name = $2 WHERE name = $1 RETURNING id, name, value, env_id, group_id, created_at, updated_at
 `
 
 type UpdateFFNameParams struct {

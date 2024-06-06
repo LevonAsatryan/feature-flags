@@ -21,6 +21,15 @@ type FeatureFlag struct {
 	Name      pgtype.Text
 	Value     pgtype.Bool
 	EnvID     pgtype.Int4
+	GroupID   pgtype.Int4
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type Group struct {
+	ID        int32
+	Name      pgtype.Text
+	EnvID     pgtype.Int4
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
 }

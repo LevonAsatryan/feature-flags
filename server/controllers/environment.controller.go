@@ -147,24 +147,13 @@ func (c *EnvController) Delete(context *gin.Context) *types.Error {
 		}
 	}
 
-	err = c.DB.DeleteFFsByEnvId(c.Ctx, pgtype.Int4{
-		Int32: int32(id),
-		Valid: true,
-	})
-
-	if err != nil {
-		return &types.Error{
-			Code: http.StatusInternalServerError,
-			Err:  fmt.Errorf("failed to delete ffs, from the environment by id=%d", id),
-		}
-	}
-
 	err = c.DB.DeleteEnv(context, int32(id))
 
 	if err != nil {
 		return &types.Error{
 			Code: http.StatusInternalServerError,
-			Err:  fmt.Errorf("failed to delete environment by id=%d", id),
+			// Err:  fmt.Errorf("failed to delete environment by id=%d", id),
+			Err: err,
 		}
 	}
 

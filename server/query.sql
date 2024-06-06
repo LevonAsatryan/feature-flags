@@ -28,6 +28,9 @@ SELECT * FROM feature_flags WHERE env_id = $1;
 -- name: GetFFByName :many
 SELECT * FROM feature_flags WHERE name = $1;
 
+-- name: CountFFByNameAndEnvId :one
+SELECT COUNT(*) FROM feature_flags WHERE name = $1 AND env_id = $2;
+
 -- name: CreateFF :one
 INSERT INTO feature_flags (name, env_id) VALUES ($1, $2) RETURNING *;
 
@@ -51,6 +54,9 @@ SELECT * FROM groups;
 
 -- name: GetOne :one
 SELECT * FROM groups WHERE id = $1;
+
+-- name: CountGroupByNameAndEnvID :one
+SELECT COUNT(*) FROM groups WHERE name = $1 AND env_id = $2;
 
 -- name: UpdateGroup :exec
 UPDATE groups set name=$1 WHERE name=$2;

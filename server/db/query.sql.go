@@ -11,6 +11,38 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countFFByNameAndEnvId = `-- name: CountFFByNameAndEnvId :one
+SELECT COUNT(*) FROM feature_flags WHERE name = $1 AND env_id = $2
+`
+
+type CountFFByNameAndEnvIdParams struct {
+	Name  pgtype.Text
+	EnvID pgtype.Int4
+}
+
+func (q *Queries) CountFFByNameAndEnvId(ctx context.Context, arg CountFFByNameAndEnvIdParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countFFByNameAndEnvId, arg.Name, arg.EnvID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countGroupByNameAndEnvID = `-- name: CountGroupByNameAndEnvID :one
+SELECT COUNT(*) FROM groups WHERE name = $1 AND env_id = $2
+`
+
+type CountGroupByNameAndEnvIDParams struct {
+	Name  pgtype.Text
+	EnvID pgtype.Int4
+}
+
+func (q *Queries) CountGroupByNameAndEnvID(ctx context.Context, arg CountGroupByNameAndEnvIDParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countGroupByNameAndEnvID, arg.Name, arg.EnvID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createEnv = `-- name: CreateEnv :one
 INSERT INTO env (name, origin_host) VALUES ($1, $2) RETURNING id, name, origin_host, created_at, updated_at
 `
@@ -80,7 +112,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 }
 
 const deleteEnv = `-- name: DeleteEnv :exec
-DELETE FROM env WHERE id = $1
+DELETE FROM env CASCADE WHERE id = $1
 `
 
 func (q *Queries) DeleteEnv(ctx context.Context, id int32) error {

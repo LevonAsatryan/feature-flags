@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/LevonAsatryan/feature-flags/db"
@@ -65,6 +66,34 @@ func (s *Server) createEnv(c *gin.Context) {
 	}
 
 	for _, ff := range ffs {
+		count, countErr := s.FFController.DB.CountFFByNameAndEnvId(
+			s.FFController.Ctx,
+			db.CountFFByNameAndEnvIdParams{
+				Name: ff.Name,
+				EnvID: pgtype.Int4{
+					Int32: env.ID,
+					Valid: true,
+				},
+			},
+		)
+
+		if countErr != nil {
+			ErrorHandler(
+				c,
+				http.StatusInternalServerError,
+				fmt.Sprintf(
+					"could not get the count for ff by name %s and envID %d",
+					ff.Name.String,
+					env.ID,
+				),
+			)
+			return
+		}
+
+		if count != 0 {
+			continue
+		}
+
 		_, createErr := s.FFController.DB.CreateFF(s.FFController.Ctx, db.CreateFFParams{
 			Name: ff.Name,
 			EnvID: pgtype.Int4{
@@ -87,6 +116,34 @@ func (s *Server) createEnv(c *gin.Context) {
 	}
 
 	for _, group := range groups {
+		count, countErr := s.FFController.DB.CountGroupByNameAndEnvID(
+			s.FFController.Ctx,
+			db.CountGroupByNameAndEnvIDParams{
+				Name: group.Name,
+				EnvID: pgtype.Int4{
+					Int32: env.ID,
+					Valid: true,
+				},
+			},
+		)
+
+		if countErr != nil {
+			ErrorHandler(
+				c,
+				http.StatusInternalServerError,
+				fmt.Sprintf(
+					"could not get the count for ff by name %s and envID %d",
+					group.Name.String,
+					env.ID,
+				),
+			)
+			return
+		}
+
+		if count != 0 {
+			continue
+		}
+
 		_, groupErr := s.GroupsController.DB.CreateGroup(c, db.CreateGroupParams{
 			Name:  pgtype.Text{String: group.Name.String, Valid: true},
 			EnvID: pgtype.Int4{Int32: env.ID, Valid: true},

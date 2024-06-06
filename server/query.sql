@@ -1,6 +1,9 @@
 -- name: GetEnv :one
 SELECT * FROM env WHERE id = $1 LIMIT 1;
 
+-- name: GetEnvCount :one
+SELECT COUNT(*) FROM env;
+
 -- name: GetEnvAll :many
 SELECT * FROM env;
 

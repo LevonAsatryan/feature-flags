@@ -48,6 +48,19 @@ func (c *EnvController) CheckAndCreateEnv() *types.Error {
 	return nil
 }
 
+func (c *EnvController) GetEnvCount(context *gin.Context) (int64, *types.Error) {
+	count, err := c.DB.GetEnvCount(c.Ctx)
+
+	if err != nil {
+		return 0, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to fetch the environment count"),
+		}
+	}
+
+	return count, nil
+}
+
 func (c *EnvController) Create(context *gin.Context) (*db.Env, *types.Error) {
 	var body CreateEnvBody
 

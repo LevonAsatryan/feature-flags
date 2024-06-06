@@ -88,7 +88,19 @@ func (s *Server) createEnv(c *gin.Context) {
 }
 
 func (s *Server) deleteEnv(c *gin.Context) {
-	err := s.EnvController.Delete(c)
+	count, err := s.EnvController.GetEnvCount(c)
+
+	if err != nil {
+		ErrorHandler(c, err.Code, err.Err.Error())
+		return
+	}
+
+	if count == 1 {
+		ErrorHandler(c, http.StatusBadRequest, "can not delete the last environment")
+		return
+	}
+
+	err = s.EnvController.Delete(c)
 
 	if err != nil {
 		ErrorHandler(c, err.Code, err.Err.Error())

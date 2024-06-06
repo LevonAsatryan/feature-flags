@@ -130,6 +130,17 @@ func (q *Queries) GetEnvAll(ctx context.Context) ([]Env, error) {
 	return items, nil
 }
 
+const getEnvCount = `-- name: GetEnvCount :one
+SELECT COUNT(*) FROM env
+`
+
+func (q *Queries) GetEnvCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getEnvCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getFeatureFlag = `-- name: GetFeatureFlag :one
 SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE id = $1 LIMIT 1
 `

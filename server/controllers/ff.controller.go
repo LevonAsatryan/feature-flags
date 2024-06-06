@@ -127,11 +127,11 @@ func (c *FFController) GetById(context *gin.Context) (*db.FeatureFlag, *types.Er
 	return &ff, nil
 }
 
-func (c *FFController) Update(context *gin.Context) *types.Error {
+func (c *FFController) Update(context *gin.Context) (*db.FeatureFlag, *types.Error) {
 	var rb UpdateFFBody
 
 	if err := context.ShouldBindJSON(&rb); err != nil {
-		return &types.Error{
+		return nil, &types.Error{
 			Code: http.StatusBadRequest,
 			Err:  fmt.Errorf("invalid body"),
 		}
@@ -140,7 +140,7 @@ func (c *FFController) Update(context *gin.Context) *types.Error {
 	id, err := strconv.Atoi(context.Param("id"))
 
 	if err != nil {
-		return &types.Error{
+		return nil, &types.Error{
 			Code: http.StatusBadRequest,
 			Err:  fmt.Errorf("invalid id provided"),
 		}
@@ -152,13 +152,22 @@ func (c *FFController) Update(context *gin.Context) *types.Error {
 	})
 
 	if err != nil {
-		return &types.Error{
+		return nil, &types.Error{
 			Code: http.StatusInternalServerError,
 			Err:  fmt.Errorf("failed to update ff"),
 		}
 	}
 
-	return nil
+	ff, err := c.DB.GetFeatureFlag(c.Ctx, int32(id))
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to fetch ff by id=%d", id),
+		}
+	}
+
+	return &ff, nil
 }
 
 func (c *FFController) UpdateName(context *gin.Context) ([]db.FeatureFlag, *types.Error) {

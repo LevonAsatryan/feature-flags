@@ -51,16 +51,14 @@ func (s *Server) getFFById(c *gin.Context) {
 }
 
 func (s *Server) updateFF(c *gin.Context) {
-	err := s.FFController.Update(c)
+	ff, err := s.FFController.Update(c)
 
 	if err != nil {
 		ErrorHandler(c, err.Code, err.Err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-	})
+	c.JSON(http.StatusOK, ff)
 }
 
 func (s *Server) updateFFName(c *gin.Context) {

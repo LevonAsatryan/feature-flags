@@ -20,6 +20,11 @@ type UpdateFFBody struct {
 	Value bool `json:"value"`
 }
 
+type UpdateFFNameBody struct {
+	NameFrom string `json:"nameFrom" binding:"required"`
+	NameTo   string `json:"nameTo" binding:"required"`
+}
+
 type FFController struct {
 	DB  *db.Queries
 	Ctx context.Context
@@ -154,6 +159,56 @@ func (c *FFController) Update(context *gin.Context) *types.Error {
 	}
 
 	return nil
+}
+
+func (c *FFController) UpdateName(context *gin.Context) ([]db.FeatureFlag, *types.Error) {
+	var rb UpdateFFNameBody
+
+	if err := context.ShouldBindJSON(&rb); err != nil {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("invalid body"),
+		}
+	}
+
+	err := c.DB.UpdateFFName(c.Ctx, db.UpdateFFNameParams{
+		Name: pgtype.Text{
+			String: rb.NameFrom,
+			Valid:  true,
+		},
+		Name_2: pgtype.Text{
+			String: rb.NameTo,
+			Valid:  true,
+		},
+	})
+
+	if rb.NameFrom == "" || rb.NameTo == "" {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("nameFrom and nameTo are required and can not be empty"),
+		}
+	}
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to update ff"),
+		}
+	}
+
+	ffs, err := c.DB.GetFFByName(c.Ctx, pgtype.Text{
+		String: rb.NameTo,
+		Valid:  true,
+	})
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to fetch feature flags with name %s", rb.NameTo),
+		}
+	}
+
+	return ffs, nil
 }
 
 func (c *FFController) Delete(context *gin.Context) *types.Error {

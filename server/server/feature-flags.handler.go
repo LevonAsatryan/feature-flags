@@ -13,6 +13,7 @@ func (s *Server) CreateFFSGroup() *gin.RouterGroup {
 	group.POST("/", s.createFF)
 	group.DELETE("/:id", s.deleteFF)
 	group.PUT("/:id", s.updateFF)
+	group.PUT("/name", s.updateFFName)
 	return group
 }
 
@@ -60,6 +61,17 @@ func (s *Server) updateFF(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
 	})
+}
+
+func (s *Server) updateFFName(c *gin.Context) {
+	ffs, err := s.FFController.UpdateName(c)
+
+	if err != nil {
+		ErrorHandler(c, err.Code, err.Err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, ffs)
 }
 
 func (s *Server) deleteFF(c *gin.Context) {

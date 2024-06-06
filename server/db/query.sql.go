@@ -141,6 +141,37 @@ func (q *Queries) GetEnvCount(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const getFFByName = `-- name: GetFFByName :many
+SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE name = $1
+`
+
+func (q *Queries) GetFFByName(ctx context.Context, name pgtype.Text) ([]FeatureFlag, error) {
+	rows, err := q.db.Query(ctx, getFFByName, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FeatureFlag
+	for rows.Next() {
+		var i FeatureFlag
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Value,
+			&i.EnvID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFeatureFlag = `-- name: GetFeatureFlag :one
 SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE id = $1 LIMIT 1
 `
@@ -247,5 +278,19 @@ type UpdateFFParams struct {
 
 func (q *Queries) UpdateFF(ctx context.Context, arg UpdateFFParams) error {
 	_, err := q.db.Exec(ctx, updateFF, arg.ID, arg.Value)
+	return err
+}
+
+const updateFFName = `-- name: UpdateFFName :exec
+UPDATE feature_flags set name = $2 WHERE name = $1 RETURNING id, name, value, env_id, created_at, updated_at
+`
+
+type UpdateFFNameParams struct {
+	Name   pgtype.Text
+	Name_2 pgtype.Text
+}
+
+func (q *Queries) UpdateFFName(ctx context.Context, arg UpdateFFNameParams) error {
+	_, err := q.db.Exec(ctx, updateFFName, arg.Name, arg.Name_2)
 	return err
 }

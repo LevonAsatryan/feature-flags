@@ -61,5 +61,9 @@ func (c *GroupsController) GetAll(ctx *gin.Context) ([]db.Group, *types.Error) {
 		}
 	}
 
+	if len(groups) == 0 {
+		groups = make([]db.Group, 0)
+	}
+
 	return groups, nil
 }

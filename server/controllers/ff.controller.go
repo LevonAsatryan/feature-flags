@@ -86,6 +86,10 @@ func (c *FFController) GetAll(context *gin.Context) ([]db.FeatureFlag, *types.Er
 		}
 	}
 
+	if len(ffs) == 0 {
+		ffs = make([]db.FeatureFlag, 0)
+	}
+
 	return ffs, nil
 }
 

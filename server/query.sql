@@ -16,13 +16,13 @@ UPDATE env set name = $2, origin_host = $3 WHERE id = $1 RETURNING *;
 -- name: DeleteEnv :exec
 DELETE FROM env WHERE id = $1;
 
--- name: GetFeatureFlag :one
+-- name: GetFF :one
 SELECT * FROM feature_flags WHERE id = $1 LIMIT 1;
 
--- name: GetFeatureFlagAll :many
+-- name: GetFFAll :many
 SELECT * FROM feature_flags;
 
--- name: GetFeatureFlagByEnvId :many
+-- name: GetFFByEnvId :many
 SELECT * FROM feature_flags WHERE env_id = $1;
 
 -- name: GetFFByName :many

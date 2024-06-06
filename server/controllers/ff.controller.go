@@ -77,7 +77,7 @@ func (c *FFController) CreateFF(context *gin.Context) ([]db.FeatureFlag, *types.
 }
 
 func (c *FFController) GetAll(context *gin.Context) ([]db.FeatureFlag, *types.Error) {
-	ffs, err := c.DB.GetFeatureFlagAll(c.Ctx)
+	ffs, err := c.DB.GetFFAll(c.Ctx)
 
 	if err != nil {
 		return nil, &types.Error{
@@ -90,7 +90,7 @@ func (c *FFController) GetAll(context *gin.Context) ([]db.FeatureFlag, *types.Er
 }
 
 func (c *FFController) GetByEnvId(context *gin.Context, envID int32) ([]db.FeatureFlag, *types.Error) {
-	ffs, err := c.DB.GetFeatureFlagByEnvId(c.Ctx, pgtype.Int4{
+	ffs, err := c.DB.GetFFByEnvId(c.Ctx, pgtype.Int4{
 		Int32: envID,
 		Valid: true,
 	})
@@ -115,7 +115,7 @@ func (c *FFController) GetById(context *gin.Context) (*db.FeatureFlag, *types.Er
 		}
 	}
 
-	ff, err := c.DB.GetFeatureFlag(c.Ctx, int32(id))
+	ff, err := c.DB.GetFF(c.Ctx, int32(id))
 
 	if err != nil {
 		return nil, &types.Error{
@@ -158,7 +158,7 @@ func (c *FFController) Update(context *gin.Context) (*db.FeatureFlag, *types.Err
 		}
 	}
 
-	ff, err := c.DB.GetFeatureFlag(c.Ctx, int32(id))
+	ff, err := c.DB.GetFF(c.Ctx, int32(id))
 
 	if err != nil {
 		return nil, &types.Error{

@@ -141,43 +141,12 @@ func (q *Queries) GetEnvCount(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const getFFByName = `-- name: GetFFByName :many
-SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE name = $1
-`
-
-func (q *Queries) GetFFByName(ctx context.Context, name pgtype.Text) ([]FeatureFlag, error) {
-	rows, err := q.db.Query(ctx, getFFByName, name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []FeatureFlag
-	for rows.Next() {
-		var i FeatureFlag
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Value,
-			&i.EnvID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getFeatureFlag = `-- name: GetFeatureFlag :one
+const getFF = `-- name: GetFF :one
 SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetFeatureFlag(ctx context.Context, id int32) (FeatureFlag, error) {
-	row := q.db.QueryRow(ctx, getFeatureFlag, id)
+func (q *Queries) GetFF(ctx context.Context, id int32) (FeatureFlag, error) {
+	row := q.db.QueryRow(ctx, getFF, id)
 	var i FeatureFlag
 	err := row.Scan(
 		&i.ID,
@@ -190,12 +159,12 @@ func (q *Queries) GetFeatureFlag(ctx context.Context, id int32) (FeatureFlag, er
 	return i, err
 }
 
-const getFeatureFlagAll = `-- name: GetFeatureFlagAll :many
+const getFFAll = `-- name: GetFFAll :many
 SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags
 `
 
-func (q *Queries) GetFeatureFlagAll(ctx context.Context) ([]FeatureFlag, error) {
-	rows, err := q.db.Query(ctx, getFeatureFlagAll)
+func (q *Queries) GetFFAll(ctx context.Context) ([]FeatureFlag, error) {
+	rows, err := q.db.Query(ctx, getFFAll)
 	if err != nil {
 		return nil, err
 	}
@@ -221,12 +190,43 @@ func (q *Queries) GetFeatureFlagAll(ctx context.Context) ([]FeatureFlag, error) 
 	return items, nil
 }
 
-const getFeatureFlagByEnvId = `-- name: GetFeatureFlagByEnvId :many
+const getFFByEnvId = `-- name: GetFFByEnvId :many
 SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE env_id = $1
 `
 
-func (q *Queries) GetFeatureFlagByEnvId(ctx context.Context, envID pgtype.Int4) ([]FeatureFlag, error) {
-	rows, err := q.db.Query(ctx, getFeatureFlagByEnvId, envID)
+func (q *Queries) GetFFByEnvId(ctx context.Context, envID pgtype.Int4) ([]FeatureFlag, error) {
+	rows, err := q.db.Query(ctx, getFFByEnvId, envID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FeatureFlag
+	for rows.Next() {
+		var i FeatureFlag
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Value,
+			&i.EnvID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFFByName = `-- name: GetFFByName :many
+SELECT id, name, value, env_id, created_at, updated_at FROM feature_flags WHERE name = $1
+`
+
+func (q *Queries) GetFFByName(ctx context.Context, name pgtype.Text) ([]FeatureFlag, error) {
+	rows, err := q.db.Query(ctx, getFFByName, name)
 	if err != nil {
 		return nil, err
 	}

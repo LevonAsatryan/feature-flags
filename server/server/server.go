@@ -11,11 +11,12 @@ import (
 )
 
 type Server struct {
-	DB            *db.Queries
-	DBTX          db.DBTX
-	R             *gin.Engine
-	FFController  controllers.FFController
-	EnvController controllers.EnvController
+	DB               *db.Queries
+	DBTX             db.DBTX
+	R                *gin.Engine
+	FFController     controllers.FFController
+	EnvController    controllers.EnvController
+	GroupsController controllers.GroupsController
 }
 
 func CreateServer() Server {
@@ -56,6 +57,10 @@ func CreateServer() Server {
 			DB:  database,
 			Ctx: ctx,
 		},
+		GroupsController: controllers.GroupsController{
+			DB:  database,
+			Ctx: ctx,
+		},
 	}
 	err = server.CreateTables(conn)
 	if err != nil {
@@ -64,6 +69,7 @@ func CreateServer() Server {
 	server.EnvController.CheckAndCreateEnv()
 	server.CreateFFSGroup()
 	server.CreateEnvGroup()
+	server.CreateGroupsGroup()
 	r.Run(port)
 
 	return server

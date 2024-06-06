@@ -68,13 +68,32 @@ func (s *Server) createEnv(c *gin.Context) {
 		_, createErr := s.FFController.DB.CreateFF(s.FFController.Ctx, db.CreateFFParams{
 			Name: ff.Name,
 			EnvID: pgtype.Int4{
-				Int32: envToCopyFrom.ID,
+				Int32: env.ID,
 				Valid: true,
 			},
 		})
 
 		if createErr != nil {
 			ErrorHandler(c, http.StatusInternalServerError, "could not create ffs for the environment")
+			return
+		}
+	}
+
+	groups, err := s.GroupsController.GetAll(c)
+
+	if err != nil {
+		ErrorHandler(c, err.Code, err.Err.Error())
+		return
+	}
+
+	for _, group := range groups {
+		_, groupErr := s.GroupsController.DB.CreateGroup(c, db.CreateGroupParams{
+			Name:  pgtype.Text{String: group.Name.String, Valid: true},
+			EnvID: pgtype.Int4{Int32: env.ID, Valid: true},
+		})
+
+		if groupErr != nil {
+			ErrorHandler(c, http.StatusInternalServerError, "could not create group for the environment")
 			return
 		}
 	}

@@ -57,6 +57,28 @@ func (q *Queries) CreateFF(ctx context.Context, arg CreateFFParams) (FeatureFlag
 	return i, err
 }
 
+const createGroup = `-- name: CreateGroup :one
+INSERT INTO groups (name, env_id) VALUES ($1, $2) RETURNING id, name, env_id, created_at, updated_at
+`
+
+type CreateGroupParams struct {
+	Name  pgtype.Text
+	EnvID pgtype.Int4
+}
+
+func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
+	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.EnvID)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.EnvID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteEnv = `-- name: DeleteEnv :exec
 DELETE FROM env WHERE id = $1
 `
@@ -81,6 +103,15 @@ DELETE FROM feature_flags WHERE env_id = $1
 
 func (q *Queries) DeleteFFsByEnvId(ctx context.Context, envID pgtype.Int4) error {
 	_, err := q.db.Exec(ctx, deleteFFsByEnvId, envID)
+	return err
+}
+
+const deleteGroup = `-- name: DeleteGroup :exec
+DELETE FROM groups WHERE id=$1
+`
+
+func (q *Queries) DeleteGroup(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteGroup, id)
 	return err
 }
 
@@ -257,8 +288,55 @@ func (q *Queries) GetFFByName(ctx context.Context, name pgtype.Text) ([]FeatureF
 	return items, nil
 }
 
+const getGroupsAll = `-- name: GetGroupsAll :many
+SELECT id, name, env_id, created_at, updated_at FROM groups
+`
+
+func (q *Queries) GetGroupsAll(ctx context.Context) ([]Group, error) {
+	rows, err := q.db.Query(ctx, getGroupsAll)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.EnvID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getOne = `-- name: GetOne :one
+SELECT id, name, env_id, created_at, updated_at FROM groups WHERE id = $1
+`
+
+func (q *Queries) GetOne(ctx context.Context, id int32) (Group, error) {
+	row := q.db.QueryRow(ctx, getOne, id)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.EnvID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateEnv = `-- name: UpdateEnv :exec
-UPDATE env set name = $2, origin_host = $3 WHERE id = $1 RETURNING id, name, origin_host, created_at, updated_at
+UPDATE env set name = $2, origin_host = $3 WHERE id = $1
 `
 
 type UpdateEnvParams struct {
@@ -273,7 +351,7 @@ func (q *Queries) UpdateEnv(ctx context.Context, arg UpdateEnvParams) error {
 }
 
 const updateFF = `-- name: UpdateFF :exec
-UPDATE feature_flags set value = $2 WHERE id = $1 RETURNING id, name, value, env_id, group_id, created_at, updated_at
+UPDATE feature_flags set value = $2 WHERE id = $1
 `
 
 type UpdateFFParams struct {
@@ -287,7 +365,7 @@ func (q *Queries) UpdateFF(ctx context.Context, arg UpdateFFParams) error {
 }
 
 const updateFFName = `-- name: UpdateFFName :exec
-UPDATE feature_flags set name = $2 WHERE name = $1 RETURNING id, name, value, env_id, group_id, created_at, updated_at
+UPDATE feature_flags set name = $2 WHERE name = $1
 `
 
 type UpdateFFNameParams struct {
@@ -297,5 +375,19 @@ type UpdateFFNameParams struct {
 
 func (q *Queries) UpdateFFName(ctx context.Context, arg UpdateFFNameParams) error {
 	_, err := q.db.Exec(ctx, updateFFName, arg.Name, arg.Name_2)
+	return err
+}
+
+const updateGroup = `-- name: UpdateGroup :exec
+UPDATE groups set name=$1 WHERE name=$2
+`
+
+type UpdateGroupParams struct {
+	Name   pgtype.Text
+	Name_2 pgtype.Text
+}
+
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) error {
+	_, err := q.db.Exec(ctx, updateGroup, arg.Name, arg.Name_2)
 	return err
 }

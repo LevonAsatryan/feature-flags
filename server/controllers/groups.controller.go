@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/LevonAsatryan/feature-flags/db"
 	"github.com/LevonAsatryan/feature-flags/types"
@@ -66,4 +67,26 @@ func (c *GroupsController) GetAll(ctx *gin.Context) ([]db.Group, *types.Error) {
 	}
 
 	return groups, nil
+}
+
+func (c *GroupsController) GetById(ctx *gin.Context) (*db.Group, *types.Error) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("invalid groups id"),
+		}
+	}
+
+	group, err := c.DB.GetGroupById(c.Ctx, int32(id))
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusNotFound,
+			Err:  fmt.Errorf("group with id %d not found", id),
+		}
+	}
+
+	return &group, nil
 }

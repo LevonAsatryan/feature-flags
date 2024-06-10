@@ -112,7 +112,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 }
 
 const deleteEnv = `-- name: DeleteEnv :exec
-DELETE FROM env CASCADE WHERE id = $1
+DELETE FROM env WHERE id = $1
 `
 
 func (q *Queries) DeleteEnv(ctx context.Context, id int32) error {
@@ -320,6 +320,23 @@ func (q *Queries) GetFFByName(ctx context.Context, name pgtype.Text) ([]FeatureF
 	return items, nil
 }
 
+const getGroupById = `-- name: GetGroupById :one
+SELECT id, name, env_id, created_at, updated_at FROM groups WHERE id = $1
+`
+
+func (q *Queries) GetGroupById(ctx context.Context, id int32) (Group, error) {
+	row := q.db.QueryRow(ctx, getGroupById, id)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.EnvID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getGroupsAll = `-- name: GetGroupsAll :many
 SELECT id, name, env_id, created_at, updated_at FROM groups
 `
@@ -350,23 +367,6 @@ func (q *Queries) GetGroupsAll(ctx context.Context) ([]Group, error) {
 	return items, nil
 }
 
-const getOne = `-- name: GetOne :one
-SELECT id, name, env_id, created_at, updated_at FROM groups WHERE id = $1
-`
-
-func (q *Queries) GetOne(ctx context.Context, id int32) (Group, error) {
-	row := q.db.QueryRow(ctx, getOne, id)
-	var i Group
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.EnvID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const updateEnv = `-- name: UpdateEnv :exec
 UPDATE env set name = $2, origin_host = $3 WHERE id = $1
 `
@@ -393,6 +393,20 @@ type UpdateFFParams struct {
 
 func (q *Queries) UpdateFF(ctx context.Context, arg UpdateFFParams) error {
 	_, err := q.db.Exec(ctx, updateFF, arg.ID, arg.Value)
+	return err
+}
+
+const updateFFGroup = `-- name: UpdateFFGroup :exec
+UPDATE feature_flags set group_id = $2 WHERE name = $1
+`
+
+type UpdateFFGroupParams struct {
+	Name    pgtype.Text
+	GroupID pgtype.Int4
+}
+
+func (q *Queries) UpdateFFGroup(ctx context.Context, arg UpdateFFGroupParams) error {
+	_, err := q.db.Exec(ctx, updateFFGroup, arg.Name, arg.GroupID)
 	return err
 }
 

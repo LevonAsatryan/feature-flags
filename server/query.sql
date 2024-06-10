@@ -40,6 +40,9 @@ UPDATE feature_flags set value = $2 WHERE id = $1;
 -- name: UpdateFFName :exec
 UPDATE feature_flags set name = $2 WHERE name = $1;
 
+-- name: UpdateFFGroup :exec
+UPDATE feature_flags set group_id = $2 WHERE name = $1;
+
 -- name: DeleteFF :exec
 DELETE FROM feature_flags WHERE id = $1;
 
@@ -52,7 +55,7 @@ INSERT INTO groups (name, env_id) VALUES ($1, $2) RETURNING *;
 -- name: GetGroupsAll :many
 SELECT * FROM groups;
 
--- name: GetOne :one
+-- name: GetGroupById :one
 SELECT * FROM groups WHERE id = $1;
 
 -- name: CountGroupByNameAndEnvID :one

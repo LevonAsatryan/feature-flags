@@ -25,6 +25,10 @@ type UpdateFFNameBody struct {
 	NameTo   string `json:"nameTo" binding:"required"`
 }
 
+type UpdateFFGroupBody struct {
+	Name string `json:"name" binding:"required"`
+}
+
 type FFController struct {
 	DB  *db.Queries
 	Ctx context.Context
@@ -172,6 +176,44 @@ func (c *FFController) Update(context *gin.Context) (*db.FeatureFlag, *types.Err
 	}
 
 	return &ff, nil
+}
+
+func (c *FFController) AddFFToGroup(context *gin.Context, groupID int32) *types.Error {
+	var rb UpdateFFGroupBody
+
+	if err := context.ShouldBindJSON(&rb); err != nil {
+		return &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("Request body validation"),
+		}
+	}
+
+	if rb.Name == "" {
+		return &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("name of ff can not be empty"),
+		}
+	}
+
+	err := c.DB.UpdateFFGroup(c.Ctx, db.UpdateFFGroupParams{
+		Name: pgtype.Text{
+			String: rb.Name,
+			Valid:  true,
+		},
+		GroupID: pgtype.Int4{
+			Int32: groupID,
+			Valid: true,
+		},
+	})
+
+	if err != nil {
+		return &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to update ffs"),
+		}
+	}
+
+	return nil
 }
 
 func (c *FFController) UpdateName(context *gin.Context) ([]db.FeatureFlag, *types.Error) {

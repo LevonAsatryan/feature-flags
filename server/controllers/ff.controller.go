@@ -12,6 +12,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type FFDTO struct {
+	ID      int32  `json:"id"`
+	Name    string `json:"name"`
+	Value   bool   `json:"value"`
+	EnvID   int32  `json:"envID"`
+	GroupID int32  `json:"groupID"`
+}
+
+func ffdtoFromFF(ff *db.FeatureFlag) *FFDTO {
+	return &FFDTO{
+		ID:      ff.ID,
+		Name:    ff.Name.String,
+		Value:   ff.Value.Bool,
+		EnvID:   ff.EnvID.Int32,
+		GroupID: ff.GroupID.Int32,
+	}
+}
+
+func ffdtoFromFFArr(ffs []db.FeatureFlag) []FFDTO {
+	ffdtos := make([]FFDTO, len(ffs))
+
+	for i := range ffs {
+		ffdtos[i] = *ffdtoFromFF(&ffs[i])
+	}
+
+	return ffdtos
+}
+
 type CreateFFBody struct {
 	Name string `json:"name" binding:"required"`
 }
@@ -34,8 +62,8 @@ type FFController struct {
 	Ctx context.Context
 }
 
-func (c *FFController) CreateFF(context *gin.Context) ([]db.FeatureFlag, *types.Error) {
-	var ffs []db.FeatureFlag
+func (c *FFController) CreateFF(context *gin.Context) ([]*FFDTO, *types.Error) {
+	var ffs []*FFDTO
 
 	var rb CreateFFBody
 
@@ -52,6 +80,32 @@ func (c *FFController) CreateFF(context *gin.Context) ([]db.FeatureFlag, *types.
 		return nil, &types.Error{
 			Code: http.StatusInternalServerError,
 			Err:  fmt.Errorf("failed to get envs"),
+		}
+	}
+
+	if rb.Name == "" {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("the name field can not be empty"),
+		}
+	}
+
+	prevFFs, err := c.DB.GetFFByName(c.Ctx, pgtype.Text{
+		String: rb.Name,
+		Valid:  true,
+	})
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to check the feature flags by name %s", rb.Name),
+		}
+	}
+
+	if len(prevFFs) != 0 {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("ff with name '%s' already exists", rb.Name),
 		}
 	}
 
@@ -74,13 +128,13 @@ func (c *FFController) CreateFF(context *gin.Context) ([]db.FeatureFlag, *types.
 			}
 		}
 
-		ffs = append(ffs, ff)
+		ffs = append(ffs, ffdtoFromFF(&ff))
 	}
 
 	return ffs, nil
 }
 
-func (c *FFController) GetAll(context *gin.Context) ([]db.FeatureFlag, *types.Error) {
+func (c *FFController) GetAll(context *gin.Context) ([]FFDTO, *types.Error) {
 	ffs, err := c.DB.GetFFAll(c.Ctx)
 
 	if err != nil {
@@ -90,14 +144,12 @@ func (c *FFController) GetAll(context *gin.Context) ([]db.FeatureFlag, *types.Er
 		}
 	}
 
-	if len(ffs) == 0 {
-		ffs = make([]db.FeatureFlag, 0)
-	}
+	ffdtos := ffdtoFromFFArr(ffs)
 
-	return ffs, nil
+	return ffdtos, nil
 }
 
-func (c *FFController) GetByEnvId(context *gin.Context, envID int32) ([]db.FeatureFlag, *types.Error) {
+func (c *FFController) GetByEnvId(context *gin.Context, envID int32) ([]FFDTO, *types.Error) {
 	ffs, err := c.DB.GetFFByEnvId(c.Ctx, pgtype.Int4{
 		Int32: envID,
 		Valid: true,
@@ -110,10 +162,10 @@ func (c *FFController) GetByEnvId(context *gin.Context, envID int32) ([]db.Featu
 		}
 	}
 
-	return ffs, nil
+	return ffdtoFromFFArr(ffs), nil
 }
 
-func (c *FFController) GetById(context *gin.Context) (*db.FeatureFlag, *types.Error) {
+func (c *FFController) GetById(context *gin.Context) (*FFDTO, *types.Error) {
 	id, err := strconv.Atoi(context.Param("id"))
 
 	if err != nil {
@@ -132,10 +184,10 @@ func (c *FFController) GetById(context *gin.Context) (*db.FeatureFlag, *types.Er
 		}
 	}
 
-	return &ff, nil
+	return ffdtoFromFF(&ff), nil
 }
 
-func (c *FFController) Update(context *gin.Context) (*db.FeatureFlag, *types.Error) {
+func (c *FFController) Update(context *gin.Context) (*FFDTO, *types.Error) {
 	var rb UpdateFFBody
 
 	if err := context.ShouldBindJSON(&rb); err != nil {
@@ -175,7 +227,7 @@ func (c *FFController) Update(context *gin.Context) (*db.FeatureFlag, *types.Err
 		}
 	}
 
-	return &ff, nil
+	return ffdtoFromFF(&ff), nil
 }
 
 func (c *FFController) AddFFToGroup(context *gin.Context, groupID int32) *types.Error {
@@ -216,7 +268,7 @@ func (c *FFController) AddFFToGroup(context *gin.Context, groupID int32) *types.
 	return nil
 }
 
-func (c *FFController) UpdateName(context *gin.Context) ([]db.FeatureFlag, *types.Error) {
+func (c *FFController) UpdateName(context *gin.Context) ([]FFDTO, *types.Error) {
 	var rb UpdateFFNameBody
 
 	if err := context.ShouldBindJSON(&rb); err != nil {
@@ -263,7 +315,7 @@ func (c *FFController) UpdateName(context *gin.Context) ([]db.FeatureFlag, *type
 		}
 	}
 
-	return ffs, nil
+	return ffdtoFromFFArr(ffs), nil
 }
 
 func (c *FFController) Delete(context *gin.Context) *types.Error {

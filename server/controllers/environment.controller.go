@@ -12,6 +12,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type EnvDTO struct {
+	ID         int32  `json:"id"`
+	Name       string `json:"name"`
+	OriginHost string `json:"originHost"`
+}
+
+func envDTOFromEnv(env *db.Env) *EnvDTO {
+	return &EnvDTO{
+		ID:         env.ID,
+		Name:       env.Name.String,
+		OriginHost: env.OriginHost.String,
+	}
+}
+
+func envDTOFromEnvArr(envs []db.Env) []EnvDTO {
+	envDTOs := make([]EnvDTO, len(envs))
+
+	for i := range envs {
+		envDTOs[i] = *envDTOFromEnv(&envs[i])
+	}
+
+	return envDTOs
+}
+
 type EnvController struct {
 	DB  *db.Queries
 	Ctx context.Context
@@ -61,7 +85,7 @@ func (c *EnvController) GetEnvCount(context *gin.Context) (int64, *types.Error) 
 	return count, nil
 }
 
-func (c *EnvController) Create(context *gin.Context) (*db.Env, *types.Error) {
+func (c *EnvController) Create(context *gin.Context) (*EnvDTO, *types.Error) {
 	var body CreateEnvBody
 
 	if err := context.ShouldBindJSON(&body); err != nil {
@@ -99,10 +123,10 @@ func (c *EnvController) Create(context *gin.Context) (*db.Env, *types.Error) {
 		}
 	}
 
-	return &env, nil
+	return envDTOFromEnv(&env), nil
 }
 
-func (c *EnvController) GetAll(context *gin.Context) ([]db.Env, *types.Error) {
+func (c *EnvController) GetAll(context *gin.Context) ([]EnvDTO, *types.Error) {
 	envs, err := c.DB.GetEnvAll(c.Ctx)
 
 	if err != nil {
@@ -112,10 +136,10 @@ func (c *EnvController) GetAll(context *gin.Context) ([]db.Env, *types.Error) {
 		}
 	}
 
-	return envs, nil
+	return envDTOFromEnvArr(envs), nil
 }
 
-func (c *EnvController) GetById(context *gin.Context) (*db.Env, *types.Error) {
+func (c *EnvController) GetById(context *gin.Context) (*EnvDTO, *types.Error) {
 	id, err := strconv.Atoi(context.Param("id"))
 
 	if err != nil {
@@ -134,7 +158,7 @@ func (c *EnvController) GetById(context *gin.Context) (*db.Env, *types.Error) {
 		}
 	}
 
-	return &env, nil
+	return envDTOFromEnv(&env), nil
 }
 
 func (c *EnvController) Delete(context *gin.Context) *types.Error {

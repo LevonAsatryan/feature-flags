@@ -21,7 +21,7 @@ type CreateGroupBody struct {
 	Name string `json:"name" binding:"required"`
 }
 
-func (c *GroupsController) Create(ctx *gin.Context, envs []db.Env) ([]db.Group, *types.Error) {
+func (c *GroupsController) Create(ctx *gin.Context, envs []EnvDTO) ([]db.Group, *types.Error) {
 
 	var rb CreateGroupBody
 	var groups []db.Group

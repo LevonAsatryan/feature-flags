@@ -12,6 +12,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type GroupDTO struct {
+	ID    int32  `json:"id"`
+	Name  string `json:"name"`
+	EnvID int32  `json:"envID"`
+}
+
+func groupDTOFromGroup(g *db.Group) *GroupDTO {
+	return &GroupDTO{
+		ID:    g.ID,
+		Name:  g.Name.String,
+		EnvID: g.ID,
+	}
+}
+
+func groupDTOFromGroupArr(gs []db.Group) []GroupDTO {
+	gdtos := make([]GroupDTO, len(gs))
+
+	for i := range gs {
+		gdtos[i] = *groupDTOFromGroup(&gs[i])
+	}
+
+	return gdtos
+}
+
 type GroupsController struct {
 	DB  *db.Queries
 	Ctx context.Context
@@ -21,7 +45,7 @@ type CreateGroupBody struct {
 	Name string `json:"name" binding:"required"`
 }
 
-func (c *GroupsController) Create(ctx *gin.Context, envs []EnvDTO) ([]db.Group, *types.Error) {
+func (c *GroupsController) Create(ctx *gin.Context, envs []EnvDTO) ([]GroupDTO, *types.Error) {
 
 	var rb CreateGroupBody
 	var groups []db.Group
@@ -29,7 +53,7 @@ func (c *GroupsController) Create(ctx *gin.Context, envs []EnvDTO) ([]db.Group, 
 	if err := ctx.ShouldBindJSON(&rb); err != nil {
 		return nil, &types.Error{
 			Code: http.StatusBadRequest,
-			Err:  fmt.Errorf("Request body validation"),
+			Err:  fmt.Errorf("request body validation"),
 		}
 	}
 
@@ -49,10 +73,10 @@ func (c *GroupsController) Create(ctx *gin.Context, envs []EnvDTO) ([]db.Group, 
 		groups = append(groups, group)
 	}
 
-	return groups, nil
+	return groupDTOFromGroupArr(groups), nil
 }
 
-func (c *GroupsController) GetAll(ctx *gin.Context) ([]db.Group, *types.Error) {
+func (c *GroupsController) GetAll(ctx *gin.Context) ([]GroupDTO, *types.Error) {
 	groups, err := c.DB.GetGroupsAll(c.Ctx)
 
 	if err != nil {
@@ -66,10 +90,10 @@ func (c *GroupsController) GetAll(ctx *gin.Context) ([]db.Group, *types.Error) {
 		groups = make([]db.Group, 0)
 	}
 
-	return groups, nil
+	return groupDTOFromGroupArr(groups), nil
 }
 
-func (c *GroupsController) GetById(ctx *gin.Context) (*db.Group, *types.Error) {
+func (c *GroupsController) GetById(ctx *gin.Context) (*GroupDTO, *types.Error) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 
 	if err != nil {
@@ -88,5 +112,5 @@ func (c *GroupsController) GetById(ctx *gin.Context) (*db.Group, *types.Error) {
 		}
 	}
 
-	return &group, nil
+	return groupDTOFromGroup(&group), nil
 }

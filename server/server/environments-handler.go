@@ -125,7 +125,10 @@ func (s *Server) createEnv(c *gin.Context) {
 		count, countErr := s.FFController.DB.CountGroupByNameAndEnvID(
 			s.FFController.Ctx,
 			db.CountGroupByNameAndEnvIDParams{
-				Name: group.Name,
+				Name: pgtype.Text{
+					String: group.Name,
+					Valid:  true,
+				},
 				EnvID: pgtype.Int4{
 					Int32: env.ID,
 					Valid: true,
@@ -139,7 +142,7 @@ func (s *Server) createEnv(c *gin.Context) {
 				http.StatusInternalServerError,
 				fmt.Sprintf(
 					"could not get the count for ff by name %s and envID %d",
-					group.Name.String,
+					group.Name,
 					env.ID,
 				),
 			)
@@ -151,7 +154,7 @@ func (s *Server) createEnv(c *gin.Context) {
 		}
 
 		_, groupErr := s.GroupsController.DB.CreateGroup(c, db.CreateGroupParams{
-			Name:  pgtype.Text{String: group.Name.String, Valid: true},
+			Name:  pgtype.Text{String: group.Name, Valid: true},
 			EnvID: pgtype.Int4{Int32: env.ID, Valid: true},
 		})
 

@@ -236,7 +236,7 @@ func (c *FFController) AddFFToGroup(context *gin.Context, groupID int32) *types.
 	if err := context.ShouldBindJSON(&rb); err != nil {
 		return &types.Error{
 			Code: http.StatusBadRequest,
-			Err:  fmt.Errorf("Request body validation"),
+			Err:  fmt.Errorf("request body validation"),
 		}
 	}
 
@@ -290,6 +290,13 @@ func (c *FFController) UpdateName(context *gin.Context) ([]FFDTO, *types.Error) 
 		Valid:  true,
 	})
 
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to check ff by name '%s' ", rb.NameTo),
+		}
+	}
+
 	if len(ffs) != 0 {
 		return nil, &types.Error{
 			Code: http.StatusBadRequest,
@@ -301,6 +308,13 @@ func (c *FFController) UpdateName(context *gin.Context) ([]FFDTO, *types.Error) 
 		String: rb.NameFrom,
 		Valid:  true,
 	})
+
+	if err != nil {
+		return nil, &types.Error{
+			Code: http.StatusInternalServerError,
+			Err:  fmt.Errorf("failed to check ff by name '%s' ", rb.NameFrom),
+		}
+	}
 
 	if len(ffs) == 0 {
 		return nil, &types.Error{

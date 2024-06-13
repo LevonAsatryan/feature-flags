@@ -278,7 +278,38 @@ func (c *FFController) UpdateName(context *gin.Context) ([]FFDTO, *types.Error) 
 		}
 	}
 
-	err := c.DB.UpdateFFName(c.Ctx, db.UpdateFFNameParams{
+	if rb.NameFrom == "" || rb.NameTo == "" {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("nameFrom and nameTo are required and can not be empty"),
+		}
+	}
+
+	ffs, err := c.DB.GetFFByName(c.Ctx, pgtype.Text{
+		String: rb.NameTo,
+		Valid:  true,
+	})
+
+	if len(ffs) != 0 {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("feature flag with name '%s' already exists", rb.NameTo),
+		}
+	}
+
+	ffs, err = c.DB.GetFFByName(c.Ctx, pgtype.Text{
+		String: rb.NameFrom,
+		Valid:  true,
+	})
+
+	if len(ffs) == 0 {
+		return nil, &types.Error{
+			Code: http.StatusBadRequest,
+			Err:  fmt.Errorf("feature flag with name '%s' does not exists", rb.NameFrom),
+		}
+	}
+
+	err = c.DB.UpdateFFName(c.Ctx, db.UpdateFFNameParams{
 		Name: pgtype.Text{
 			String: rb.NameFrom,
 			Valid:  true,
@@ -289,13 +320,6 @@ func (c *FFController) UpdateName(context *gin.Context) ([]FFDTO, *types.Error) 
 		},
 	})
 
-	if rb.NameFrom == "" || rb.NameTo == "" {
-		return nil, &types.Error{
-			Code: http.StatusBadRequest,
-			Err:  fmt.Errorf("nameFrom and nameTo are required and can not be empty"),
-		}
-	}
-
 	if err != nil {
 		return nil, &types.Error{
 			Code: http.StatusInternalServerError,
@@ -303,7 +327,7 @@ func (c *FFController) UpdateName(context *gin.Context) ([]FFDTO, *types.Error) 
 		}
 	}
 
-	ffs, err := c.DB.GetFFByName(c.Ctx, pgtype.Text{
+	ffs, err = c.DB.GetFFByName(c.Ctx, pgtype.Text{
 		String: rb.NameTo,
 		Valid:  true,
 	})

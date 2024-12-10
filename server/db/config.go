@@ -10,7 +10,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func ConnectDB() *mongo.Client {
+const FF_TABLE_NAME = "ffs"
+const DATABASE_NAME = "feature_flags"
+
+type DatabaseService struct {
+	client *mongo.Client
+	ffCol  *mongo.Collection
+	ctx    context.Context
+}
+
+func ConnectDB() *DatabaseService {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	uri := os.Getenv("MONGODB_URI")
@@ -27,5 +36,9 @@ func ConnectDB() *mongo.Client {
 		panic(err)
 	}
 
-	return client
+	ffCol := client.Database(DATABASE_NAME).Collection(FF_TABLE_NAME)
+
+	dbService := DatabaseService{client: client, ffCol: ffCol, ctx: ctx}
+
+	return &dbService
 }

@@ -21,14 +21,28 @@ func main() {
 		log.Println("No .env file found")
 	}
 
-	dbClient := db.ConnectDB()
+	dbc := db.ConnectDB()
 
-	err := db.InsertMockData(dbClient)
+	err := dbc.InsertMockData()
 
 	if err != nil {
 		fmt.Errorf("Failed to insert into database with error:%s", err.Error())
 		panic(err)
 	}
+
+	ffDTO := db.FFDto{
+		Name:  "test feature with DTO",
+		Value: true,
+	}
+
+	res, err := dbc.CreateFF(&ffDTO)
+
+	if err != nil {
+		fmt.Errorf("Failed to insert from DTO: %s", err.Error())
+		panic(err)
+	}
+
+	fmt.Println("inserted value with: %s", res)
 
 	// Server part
 	r := gin.Default()

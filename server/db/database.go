@@ -1,20 +1,25 @@
 package db
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const FF_TABLE_NAME = "ffs"
-const DATABASE_NAME = "feature_flags"
+type FeatureFlag struct {
+	Id        primitive.ObjectID `bson:"_id" json:"id"`
+	Name      string             `bson:"name" json:"name"`
+	Value     bool               `bson:"value" json:"value"`
+	CreatedAt time.Time          `bson:"created_at"`
+	UpdatedAt time.Time          `bson:"updated_at"`
+}
 
-func InsertMockData(client *mongo.Client) error {
-	coll := client.Database(DATABASE_NAME).Collection(FF_TABLE_NAME)
-	res, err := coll.InsertOne(context.TODO(), bson.D{
+func (dbs *DatabaseService) InsertMockData() error {
+	res, err := dbs.ffCol.InsertOne(dbs.ctx, bson.D{
 		{"name", "feature 1"},
 		{"value", true},
 	})
@@ -38,4 +43,20 @@ func InsertMockData(client *mongo.Client) error {
 	fmt.Printf("%s\n", jsonData)
 
 	return err
+}
+
+func (dbs *DatabaseService) CreateFF(ffDTO *FFDto) (*mongo.InsertOneResult, error) {
+	ff := FeatureFlag{
+		Name:      ffDTO.Name,
+		Value:     ffDTO.Value,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	res, err := dbs.ffCol.InsertOne(dbs.ctx, ff)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

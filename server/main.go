@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/LevonAsatryan/feature-flags/server/controllers"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -28,6 +29,8 @@ func main() {
 			"message": "pong",
 		})
 	})
+
+	controllers.RegisterRoutes(r)
 
 	port := os.Getenv("PORT")
 	if port == "" {

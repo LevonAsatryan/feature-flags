@@ -7,16 +7,17 @@ WORKDIR /app
 
 # Download Go modules
 COPY go.mod go.sum ./
-COPY .env ./
+COPY .env .env
 RUN go mod download
 
 # Copy the source code.
 COPY *.go ./
+COPY . .
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-feature-flags
+RUN CGO_ENABLED=0 GOOS=linux go build -o /feature-flags
 
 EXPOSE 8080
 
 # Run
-CMD ["/docker-feature-flags"]
+CMD ["/feature-flags"]

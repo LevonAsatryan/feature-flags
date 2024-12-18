@@ -17,5 +17,5 @@ $ docker-compose up --build
 
 ```bash
 # connect to postgres
-$ psql -h localhost -U postgres -d postgres
+$ psql -h localhost -U postgres -d feature_flags
 ```

@@ -1,12 +1,10 @@
 package models
 
-import (
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-)
+import "time"
 
 type Group struct {
-	gorm.Model
-	Id   uuid.UUID `gorm:"type:uuid;default:gen_random_uuid()"`
-	Name string
+	ID        string    `gorm:"type:uuid;default:gen_random_uuid()"`
+	Name      string    `json:"name" gorm:"unique";not null`
+	CreatedAt time.Time `gorm:"<-:create"`
+	UpdatedAt time.Time
 }

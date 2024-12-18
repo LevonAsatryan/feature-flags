@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/LevonAsatryan/feature-flags/server/controllers"
+	"github.com/LevonAsatryan/feature-flags/server/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -17,12 +18,11 @@ func init() {
 }
 
 func main() {
-
-	// Server part
 	r := gin.Default()
-	// Use Logger middleware and Recovery middleware
+
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(middlewares.ErrorHandler())
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

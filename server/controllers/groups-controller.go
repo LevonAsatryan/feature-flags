@@ -46,7 +46,7 @@ func RegisterRoutes(r *gin.Engine) {
 		ctx.JSON(http.StatusOK, gin.H{"message": "Group updated successfully"})
 	})
 
-	api.DELETE("/:id", func(ctx *gin.Context) {
+	api.DELETE("/:id", middlewares.ValidateId, func(ctx *gin.Context) {
 		var group models.Group
 		group.ID = ctx.Param("id")
 

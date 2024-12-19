@@ -14,6 +14,13 @@ func GetGroups() ([]models.Group, error) {
 	return groups, err
 }
 
+func GetGroup(id string) (models.Group, error) {
+	var group models.Group
+	group.ID = id
+	err := db.First(&group).Error
+	return group, err
+}
+
 func CreateGroup(group *models.Group) error {
 	return db.Create(&group).Error
 }

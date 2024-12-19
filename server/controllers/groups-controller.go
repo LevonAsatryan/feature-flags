@@ -24,6 +24,20 @@ func RegisterRoutes(r *gin.Engine) {
 		ctx.JSON(http.StatusOK, groups)
 	})
 
+	api.GET("/:id", middlewares.ValidateId, func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		group, err := groupService.GetGroup(id)
+		if err != nil {
+			ctx.AbortWithStatusJSON(
+				http.StatusNotFound,
+				gin.H{"error": fmt.Sprintf("Group with id: %s not found", id)},
+			)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, group)
+	})
+
 	api.POST("", func(ctx *gin.Context) {
 		var group models.Group
 		if err := ctx.ShouldBindJSON(&group); err != nil {

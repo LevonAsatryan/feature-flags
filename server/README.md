@@ -19,3 +19,15 @@ $ docker-compose up --build
 # connect to postgres
 $ psql -h localhost -U postgres -d feature_flags
 ```
+
+## Run migrations manually
+
+```bash
+# up
+$ goose -dir [migrations-directory] [driver] ["db-url"] up
+```
+
+```bash
+# down
+$ goose -dir [migrations-directory] [driver] ["db-url"] down
+```

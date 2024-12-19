@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/LevonAsatryan/feature-flags/server/middlewares"
@@ -13,7 +14,14 @@ func RegisterRoutes(r *gin.Engine) {
 	api := r.Group("/groups")
 
 	api.GET("", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, groupService.GetGroups())
+		groups, err := groupService.GetGroups()
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, fmt.Errorf("Failed to fetch the groups"))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, groups)
 	})
 
 	api.POST("", func(ctx *gin.Context) {

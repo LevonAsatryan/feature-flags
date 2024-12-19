@@ -7,11 +7,11 @@ import (
 
 var db = postgres.DB
 
-func GetGroups() []models.Group {
+func GetGroups() ([]models.Group, error) {
 	var groups []models.Group
 
-	db.Find(&groups)
-	return groups
+	err := db.Find(&groups).Error
+	return groups, err
 }
 
 func CreateGroup(group *models.Group) error {

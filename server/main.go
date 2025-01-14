@@ -30,7 +30,8 @@ func main() {
 		})
 	})
 
-	controllers.RegisterRoutes(r)
+	controllers.RegisterGroupRoutes(r)
+	controllers.RegisterFFRoutes(r)
 
 	port := os.Getenv("PORT")
 	if port == "" {

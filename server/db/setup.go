@@ -24,7 +24,10 @@ func Setup() *gorm.DB {
 		panic("Failed to connect to the db")
 	}
 
-	db.AutoMigrate(&models.Group{})
+	db.AutoMigrate(
+		&models.Group{},
+		&models.FeatureFlag{},
+	)
 
 	return db
 }

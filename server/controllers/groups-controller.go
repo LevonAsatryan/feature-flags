@@ -6,15 +6,20 @@ import (
 
 	"github.com/LevonAsatryan/feature-flags/server/middlewares"
 	"github.com/LevonAsatryan/feature-flags/server/models"
-	groupService "github.com/LevonAsatryan/feature-flags/server/services"
+	"github.com/LevonAsatryan/feature-flags/server/services"
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(r *gin.Engine) {
+func RegisterGroupRoutes(r *gin.Engine) {
 	api := r.Group("/groups")
+	err := services.CheckRegisterRootGroup()
+
+	if err != nil {
+		panic(err)
+	}
 
 	api.GET("", func(ctx *gin.Context) {
-		groups, err := groupService.GetGroups()
+		groups, err := services.GetGroups()
 
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, fmt.Errorf("Failed to fetch the groups"))
@@ -24,6 +29,23 @@ func RegisterRoutes(r *gin.Engine) {
 		ctx.JSON(http.StatusOK, groups)
 	})
 
+<<<<<<< Updated upstream
+=======
+	api.GET("/:id", middlewares.ValidateId, func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		group, err := services.GetGroup(id)
+		if err != nil {
+			ctx.AbortWithStatusJSON(
+				http.StatusNotFound,
+				gin.H{"error": fmt.Sprintf("Group with id: %s not found", id)},
+			)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, group)
+	})
+
+>>>>>>> Stashed changes
 	api.POST("", func(ctx *gin.Context) {
 		var group models.Group
 		if err := ctx.ShouldBindJSON(&group); err != nil {
@@ -31,7 +53,7 @@ func RegisterRoutes(r *gin.Engine) {
 			return
 		}
 
-		if err := groupService.CreateGroup(&group); err != nil {
+		if err := services.CreateGroup(&group); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -47,7 +69,7 @@ func RegisterRoutes(r *gin.Engine) {
 
 		group.ID = ctx.Param("id")
 
-		if err := groupService.UpdateGroup(&group); err != nil {
+		if err := services.UpdateGroup(&group); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -58,7 +80,7 @@ func RegisterRoutes(r *gin.Engine) {
 		var group models.Group
 		group.ID = ctx.Param("id")
 
-		if err := groupService.DeleteGroup(&group); err != nil {
+		if err := services.DeleteGroup(&group); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

@@ -20,4 +20,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /feature-flags
 
 EXPOSE 8080
 
-CMD goose -dir ./db/migrations up && /feature-flags
+CMD /feature-flags && goose -dir ./db/migrations up

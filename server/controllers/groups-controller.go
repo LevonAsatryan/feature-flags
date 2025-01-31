@@ -29,8 +29,6 @@ func RegisterGroupRoutes(r *gin.Engine) {
 		ctx.JSON(http.StatusOK, groups)
 	})
 
-<<<<<<< Updated upstream
-=======
 	api.GET("/:id", middlewares.ValidateId, func(ctx *gin.Context) {
 		id := ctx.Param("id")
 		group, err := services.GetGroup(id)
@@ -45,7 +43,6 @@ func RegisterGroupRoutes(r *gin.Engine) {
 		ctx.JSON(http.StatusOK, group)
 	})
 
->>>>>>> Stashed changes
 	api.POST("", func(ctx *gin.Context) {
 		var group models.Group
 		if err := ctx.ShouldBindJSON(&group); err != nil {

@@ -43,6 +43,14 @@ func GetGroups() ([]models.Group, error) {
 	return groups, err
 }
 
+func GetGroup(id string) (*models.Group, error) {
+	group := &models.Group{}
+
+	err := db.First(&group, "id = ?", id).Error
+
+	return group, err
+}
+
 func CreateGroup(group *models.Group) error {
 	return db.Create(&group).Error
 }

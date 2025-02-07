@@ -13,10 +13,10 @@ import (
 func Setup() *gorm.DB {
 	dsn := fmt.Sprintf(
 		"host=%v user=%v password=%v dbname=%v sslmode=disable",
-		os.Getenv("DATABASE_HOST"),
-		os.Getenv("DATABASE_USER"),
-		os.Getenv("DATABASE_PASSWORD"),
-		os.Getenv("DATABASE_NAME"),
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_NAME"),
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 

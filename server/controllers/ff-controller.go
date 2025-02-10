@@ -38,4 +38,22 @@ func RegisterFFRoutes(r *gin.Engine) {
 
 		ctx.JSON(http.StatusCreated, gin.H{"message": "FF created successfully"})
 	})
+
+	api.GET("/:groupID", func(ctx *gin.Context) {
+		groupID, isPassed := ctx.Params.Get("groupID")
+
+		if !isPassed {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "groupd id can not be empty"})
+			return
+		}
+
+		ffs, err := services.GetFFsByGroupID(groupID)
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, ffs)
+	})
 }

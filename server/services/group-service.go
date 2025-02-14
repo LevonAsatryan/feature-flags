@@ -1,9 +1,7 @@
 package services
 
 import (
-	"errors"
 	"fmt"
-	"net/http"
 
 	postgres "github.com/LevonAsatryan/feature-flags/server/db"
 	"github.com/LevonAsatryan/feature-flags/server/models"
@@ -49,15 +47,7 @@ func GetGroups() ([]models.Group, error) {
 }
 
 func GetGroup(id string, ctx *gin.Context, projections []string) (models.Group, error) {
-	group, err := repositories.FindByID[models.Group](id, projections)
-
-	if group.ID == "" {
-		err := errors.New("group not found")
-		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": err.Error()})
-		return group, err
-	}
-
-	return group, err
+	return repositories.FindByID[models.Group](id, projections)
 }
 
 func CreateGroup(group *models.Group) error {

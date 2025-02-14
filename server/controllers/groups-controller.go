@@ -30,8 +30,9 @@ func RegisterGroupRoutes(r *gin.Engine) {
 	})
 
 	api.GET("/:id", middlewares.ValidateId, func(ctx *gin.Context) {
+		projections := []string{"id", "Name", "CreatedAt", "UpdatedAt"}
 		id := ctx.Param("id")
-		group, err := services.GetGroup(id)
+		group, err := services.GetGroup(id, ctx, projections)
 		if err != nil {
 			ctx.AbortWithStatusJSON(
 				http.StatusNotFound,

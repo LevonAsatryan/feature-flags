@@ -1,10 +1,14 @@
 package services
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 
 	postgres "github.com/LevonAsatryan/feature-flags/server/db"
 	"github.com/LevonAsatryan/feature-flags/server/models"
+	"github.com/LevonAsatryan/feature-flags/server/repositories"
+	"github.com/gin-gonic/gin"
 )
 
 var db = postgres.DB
@@ -20,14 +24,15 @@ func CheckRegisterRootGroup() error {
 	}
 
 	fmt.Printf("group name: %v \n", rootGroup.Name)
+	projections := []string{"id"}
 
-	err := db.Where("name = ?", rootGroup.Name).Find(&rootGroup).Error
+	exsitedGroup, err := repositories.FindByName[models.Group](rootGroup.Name, projections)
 
 	if err != nil {
 		return err
 	}
 
-	if rootGroup.ID == "" {
+	if exsitedGroup.ID == "" {
 		err = db.Create(&rootGroup).Error
 	}
 
@@ -39,26 +44,30 @@ func CheckRegisterRootGroup() error {
 func GetGroups() ([]models.Group, error) {
 	var groups []models.Group
 
-	err := db.Find(&groups).Error
+	groups, err := repositories.FindAll[models.Group]()
 	return groups, err
 }
 
-func GetGroup(id string) (*models.Group, error) {
-	group := &models.Group{}
+func GetGroup(id string, ctx *gin.Context, projections []string) (models.Group, error) {
+	group, err := repositories.FindByID[models.Group](id, projections)
 
-	err := db.First(&group, "id = ?", id).Error
+	if group.ID == "" {
+		err := errors.New("group not found")
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": err.Error()})
+		return group, err
+	}
 
 	return group, err
 }
 
 func CreateGroup(group *models.Group) error {
-	return db.Create(&group).Error
+	return repositories.Create[models.Group](group)
 }
 
 func UpdateGroup(group *models.Group) error {
-	return db.Save(&group).Error
+	return repositories.Update[models.Group](group)
 }
 
 func DeleteGroup(group *models.Group) error {
-	return db.Delete(group).Error
+	return repositories.Delete[models.Group](group)
 }

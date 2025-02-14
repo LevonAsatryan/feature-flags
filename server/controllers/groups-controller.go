@@ -22,7 +22,7 @@ func RegisterGroupRoutes(r *gin.Engine) {
 		groups, err := services.GetGroups()
 
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, fmt.Errorf("Failed to fetch the groups"))
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("failed to fetch the groups")})
 			return
 		}
 
@@ -31,12 +31,17 @@ func RegisterGroupRoutes(r *gin.Engine) {
 
 	api.GET("/:id", middlewares.ValidateId, func(ctx *gin.Context) {
 		id := ctx.Param("id")
-		group, err := services.GetGroup(id)
+		projections := []string{"id", "Name", "CreatedAt", "UpdatedAt"}
+
+		group, err := services.GetGroup(id, ctx, projections)
+
+		if err != nil && err.Error() == "record not found" {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("group with id: %s not found", id)})
+			return
+		}
+
 		if err != nil {
-			ctx.AbortWithStatusJSON(
-				http.StatusNotFound,
-				gin.H{"error": fmt.Sprintf("Group with id: %s not found", id)},
-			)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 
@@ -46,12 +51,12 @@ func RegisterGroupRoutes(r *gin.Engine) {
 	api.POST("", func(ctx *gin.Context) {
 		var group models.Group
 		if err := ctx.ShouldBindJSON(&group); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 			return
 		}
 
 		if err := services.CreateGroup(&group); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 		ctx.JSON(http.StatusCreated, gin.H{"message": "Group created successfully"})
@@ -60,14 +65,14 @@ func RegisterGroupRoutes(r *gin.Engine) {
 	api.PUT("/:id", middlewares.ValidateId, func(ctx *gin.Context) {
 		var group models.Group
 		if err := ctx.ShouldBindJSON(&group); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 			return
 		}
 
 		group.ID = ctx.Param("id")
 
 		if err := services.UpdateGroup(&group); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 		ctx.JSON(http.StatusOK, gin.H{"message": "Group updated successfully"})
@@ -78,7 +83,7 @@ func RegisterGroupRoutes(r *gin.Engine) {
 		group.ID = ctx.Param("id")
 
 		if err := services.DeleteGroup(&group); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 		ctx.JSON(http.StatusOK, gin.H{"message": "Group deleted successfully"})

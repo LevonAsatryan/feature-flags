@@ -16,7 +16,7 @@ func RegisterFFRoutes(r *gin.Engine) {
 		ffs, err := services.GetFFs()
 
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, fmt.Errorf("Failed to fetch feature flags"))
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("Failed to fetch feature flags")})
 			return
 		}
 
@@ -32,7 +32,7 @@ func RegisterFFRoutes(r *gin.Engine) {
 		}
 
 		if err := services.CreateFF(&ff); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 

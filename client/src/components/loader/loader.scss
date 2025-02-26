@@ -1,0 +1,22 @@
+$size: 48px;
+$border-size: 5px;
+
+.loader {
+  width: $size;
+  height: $size;
+  border: $border-size solid var(--ff-primary-text-color);
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

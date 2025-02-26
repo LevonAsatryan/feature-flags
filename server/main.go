@@ -34,6 +34,7 @@ func main() {
 		})
 	})
 
+	controllers.RegisterCORS(r)
 	controllers.RegisterGroupRoutes(r)
 	controllers.RegisterFFRoutes(r)
 

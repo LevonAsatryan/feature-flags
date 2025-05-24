@@ -7,7 +7,6 @@ import (
 	"github.com/LevonAsatryan/feature-flags/server/models"
 )
 
-var db = postgres.DB
 
 var RootGroupID string
 
@@ -21,14 +20,14 @@ func CheckRegisterRootGroup() error {
 
 	fmt.Printf("group name: %v \n", rootGroup.Name)
 
-	err := db.Where("name = ?", rootGroup.Name).Find(&rootGroup).Error
+	err := postgres.DB.Where("name = ?", rootGroup.Name).Find(&rootGroup).Error
 
 	if err != nil {
 		return err
 	}
 
 	if rootGroup.ID == "" {
-		err = db.Create(&rootGroup).Error
+		err = postgres.DB.Create(&rootGroup).Error
 	}
 
 	RootGroupID = rootGroup.ID
@@ -39,26 +38,26 @@ func CheckRegisterRootGroup() error {
 func GetGroups() ([]models.Group, error) {
 	var groups []models.Group
 
-	err := db.Find(&groups).Error
+	err := postgres.DB.Find(&groups).Error
 	return groups, err
 }
 
 func GetGroup(id string) (*models.Group, error) {
 	group := &models.Group{}
 
-	err := db.First(&group, "id = ?", id).Error
+	err := postgres.DB.First(&group, "id = ?", id).Error
 
 	return group, err
 }
 
 func CreateGroup(group *models.Group) error {
-	return db.Create(&group).Error
+	return postgres.DB.Create(&group).Error
 }
 
 func UpdateGroup(group *models.Group) error {
-	return db.Save(&group).Error
+	return postgres.DB.Save(&group).Error
 }
 
 func DeleteGroup(group *models.Group) error {
-	return db.Delete(group).Error
+	return postgres.DB.Delete(group).Error
 }

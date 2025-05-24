@@ -11,6 +11,7 @@ import (
 
 	"github.com/LevonAsatryan/feature-flags/server/controllers"
 	"github.com/LevonAsatryan/feature-flags/server/middlewares"
+	"github.com/LevonAsatryan/feature-flags/server/db"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -22,6 +23,10 @@ func init() {
 }
 
 func main() {
+	db.DB = db.Setup();
+	if db.DB == nil {
+		panic("DB object is null")
+	}
 	r := gin.Default()
 
 	r.Use(gin.Logger())
